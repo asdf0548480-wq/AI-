@@ -79,15 +79,19 @@ class BluetoothMonitorService : Service() {
     }
 
     private fun loadModel() {
+        updateNotification("טוען מודל זיהוי דיבור...")
         StorageService.unpack(this, "model-he", "model",
             { unpackedModel ->
                 model = unpackedModel
                 Log.d(TAG, "מודל הזיהוי נטען בהצלחה - offline, ללא רשת")
                 showToast("מודל הזיהוי נטען בהצלחה")
+                updateNotification("מודל נטען בהצלחה - ממתין לחיבור אוזניות...")
             },
             { exception ->
                 Log.e(TAG, "שגיאה בטעינת המודל", exception)
-                showToast("שגיאה בטעינת המודל: ${exception.javaClass.simpleName}: ${exception.message}")
+                val detail = "${exception.javaClass.simpleName}: ${exception.message}"
+                showToast("שגיאה בטעינת המודל: $detail")
+                updateNotification("שגיאה בטעינת המודל: $detail")
             })
     }
 
