@@ -12,6 +12,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
+        android:name=".CrashApp"
         android:allowBackup="true"
         android:label="שליטה קולית"
         android:theme="@style/Theme.AppCompat.NoActionBar">
