@@ -1,6 +1,7 @@
 package com.example.voicedial
 
 import android.Manifest
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -32,6 +33,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        showCrashLogIfAny()
 
         val status = TextView(this).apply {
             text = "אפליקציית שליטה קולית במוזיקה\n\n" +
@@ -152,6 +155,20 @@ class MainActivity : AppCompatActivity() {
         } else {
             startService(serviceIntent)
         }
+    }
+
+    private fun showCrashLogIfAny() {
+        val prefs = getSharedPreferences("crash_log", MODE_PRIVATE)
+        val crash = prefs.getString("last_crash", null) ?: return
+
+        AlertDialog.Builder(this)
+            .setTitle("פרטי הקריסה האחרונה")
+            .setMessage(crash)
+            .setPositiveButton("סגור") { _, _ ->
+                prefs.edit().remove("last_crash").apply()
+            }
+            .setCancelable(false)
+            .show()
     }
 
     companion object {
