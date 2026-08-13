@@ -29,7 +29,27 @@ android {
     kotlinOptions {
         jvmTarget = '17'
     }
+
+    sourceSets {
+        main {
+            assets.srcDirs += "$buildDir/generated/assets"
+        }
+    }
 }
+
+// Vosk models never ship with a "uuid" marker file — Vosk's own tooling generates
+// it at build time. This task recreates that behavior automatically, so no one
+// needs to manually create a uuid file inside assets/model-he ever again.
+tasks.register('genUUID') {
+    def uuid = UUID.randomUUID().toString()
+    def odir = file("$buildDir/generated/assets/model-he")
+    def ofile = file("$odir/uuid")
+    doLast {
+        odir.mkdirs()
+        ofile.text = uuid
+    }
+}
+preBuild.dependsOn genUUID
 
 dependencies {
     implementation 'androidx.core:core-ktx:1.13.1'
