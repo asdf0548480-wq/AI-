@@ -54,20 +54,44 @@ class BluetoothMonitorService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        startForeground(NOTIFICATION_ID, buildNotification("ממתין לחיבור אוזניות..."))
 
-        val filter = IntentFilter().apply {
-            addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
-            addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
-            addAction(AudioManager.ACTION_HEADSET_PLUG)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(bluetoothReceiver, filter, Context.RECEIVER_EXPORTED)
-        } else {
-            registerReceiver(bluetoothReceiver, filter)
+        if (androidx.core.content.ContextCompat.checkSelfPermission(
+                this, android.Manifest.permission.RECORD_AUDIO
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            Log.e(TAG, "אין הרשאת מיקרופון - לא ניתן להפעיל שירות מסוג microphone")
+            showToast("חסרה הרשאת מיקרופון - פתח את האפליקציה ואשר הרשאות")
+            stopSelf()
+            return
         }
 
-        loadModel()
+        try {
+            startForeground(NOTIFICATION_ID, buildNotification("ממתין לחיבור אוזניות..."))
+        } catch (e: Exception) {
+            Log.e(TAG, "קריסה בהפעלת startForeground", e)
+            showToast("שגיאה בהפעלת השירות: ${e.javaClass.simpleName}: ${e.message}")
+            stopSelf()
+            return
+        }
+
+        try {
+            val filter = IntentFilter().apply {
+                addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
+                addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
+                addAction(AudioManager.ACTION_HEADSET_PLUG)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(bluetoothReceiver, filter, Context.RECEIVER_EXPORTED)
+            } else {
+                registerReceiver(bluetoothReceiver, filter)
+            }
+
+            loadModel()
+        } catch (e: Exception) {
+            Log.e(TAG, "קריסה בהמשך onCreate", e)
+            showToast("שגיאה באתחול השירות: ${e.javaClass.simpleName}: ${e.message}")
+            updateNotification("שגיאה באתחול: ${e.javaClass.simpleName}: ${e.message}")
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
