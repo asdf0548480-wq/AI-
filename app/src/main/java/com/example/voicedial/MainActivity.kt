@@ -38,10 +38,18 @@ class MainActivity : AppCompatActivity() {
 
         val status = TextView(this).apply {
             text = "אפליקציית שליטה קולית במוזיקה\n\n" +
-                    "השירות יאזין לפקודות קוליות רק כאשר אוזניות בלוטות' מחוברות.\n" +
-                    "כל הזיהוי מתבצע במכשיר עצמו, ללא חיבור לאינטרנט.\n\n" +
-                    "6 הפקודות: תפעיל מוזיקה / תפסיק מוזיקה / תעביר שיר קדימה / " +
-                    "תעביר שיר אחורה / תגביר קול / תנמיך קול"
+                    "איך להשתמש:\n" +
+                    "1. לוחצים \"הפעל שירות רקע\" ואישרים הרשאות.\n" +
+                    "2. מחברים אוזניות בלוטות' - ההאזנה מתחילה אוטומטית.\n" +
+                    "3. פותחים נגן מוזיקה כלשהו ברקע (ספוטיפיי / יוטיוב מיוזיק / נגן מקומי).\n" +
+                    "4. אומרים בבירור אחת מ-6 הפקודות (באנגלית):\n\n" +
+                    "🎵 \"play music\" (פליי מיוזיק) - מפעיל מוזיקה\n" +
+                    "⏸ \"stop music\" (סטופ מיוזיק) - עוצר מוזיקה\n" +
+                    "⏭ \"next song\" (נקסט סונג) - שיר הבא\n" +
+                    "⏮ \"previous song\" (פריביאס סונג) - שיר קודם\n" +
+                    "🔊 \"volume up\" (ווליום אפ) - מגביר עוצמה\n" +
+                    "🔉 \"volume down\" (ווליום דאון) - מנמיך עוצמה\n\n" +
+                    "כל הזיהוי מתבצע במכשיר עצמו, ללא חיבור לאינטרנט."
             textSize = 16f
             setTextColor(Color.WHITE)
             setPadding(40, 60, 40, 40)
@@ -84,10 +92,18 @@ class MainActivity : AppCompatActivity() {
             addView(testButton)
         }
 
+        val scrollWrapper = android.widget.ScrollView(this).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            addView(contentColumn)
+        }
+
         val root = FrameLayout(this).apply {
             addView(backgroundImage)
             addView(darkOverlay)
-            addView(contentColumn)
+            addView(scrollWrapper)
         }
         setContentView(root)
     }
