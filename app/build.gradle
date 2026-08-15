@@ -56,6 +56,11 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
 
     // Vosk offline speech recognition (from Maven Central directly)
-    // Note: vosk-android already pulls in JNA transitively — do not add it separately
-    implementation 'com.alphacephei:vosk-android:0.3.45'
+    // vosk-android transitively pulls in the PLAIN jna jar, which lacks proper
+    // Android-native packaging and crashes with UnsatisfiedLinkError at runtime.
+    // We exclude that and add the correct Android "@aar" classifier instead.
+    implementation('com.alphacephei:vosk-android:0.3.45') {
+        exclude group: 'net.java.dev.jna', module: 'jna'
+    }
+    implementation 'net.java.dev.jna:jna:5.13.0@aar'
 }
