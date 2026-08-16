@@ -3,7 +3,7 @@ package com.example.voicedial
 object PhraseConfig {
 
     enum class MediaAction {
-        PLAY, PAUSE, NEXT, PREVIOUS, VOLUME_UP, VOLUME_DOWN
+        PLAY, PAUSE, NEXT, PREVIOUS, VOLUME_UP, VOLUME_DOWN, PLAY_SPECIFIC
     }
 
     data class VoiceCommand(
@@ -17,7 +17,8 @@ object PhraseConfig {
         VoiceCommand("next song", MediaAction.NEXT),
         VoiceCommand("previous song", MediaAction.PREVIOUS),
         VoiceCommand("volume up", MediaAction.VOLUME_UP),
-        VoiceCommand("volume down", MediaAction.VOLUME_DOWN)
+        VoiceCommand("volume down", MediaAction.VOLUME_DOWN),
+        VoiceCommand("play song", MediaAction.PLAY_SPECIFIC)
     )
 
     fun buildGrammarJson(): String {
@@ -25,4 +26,3 @@ object PhraseConfig {
         return "[${words.joinToString(",")}, \"[unk]\"]"
     }
 }
-    
