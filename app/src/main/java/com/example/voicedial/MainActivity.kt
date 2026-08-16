@@ -23,6 +23,11 @@ class MainActivity : AppCompatActivity() {
     private val requiredPermissions = mutableListOf(
         Manifest.permission.RECORD_AUDIO
     ).apply {
+        if (Build.VERSION.SDK_INT >= 33) {
+            add(Manifest.permission.READ_MEDIA_AUDIO)
+        } else {
+            add(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             add(Manifest.permission.BLUETOOTH_CONNECT)
         }
@@ -48,7 +53,8 @@ class MainActivity : AppCompatActivity() {
                     "⏭ \"next song\" (נקסט סונג) - שיר הבא\n" +
                     "⏮ \"previous song\" (פריביאס סונג) - שיר קודם\n" +
                     "🔊 \"volume up\" (ווליום אפ) - מגביר עוצמה\n" +
-                    "🔉 \"volume down\" (ווליום דאון) - מנמיך עוצמה\n\n" +
+                    "🔉 \"volume down\" (ווליום דאון) - מנמיך עוצמה\n" +
+                    "🔍 \"play song\" (פליי סונג) - ואז אומרים שם שיר, האפליקציה תחפש ותנגן אותו מהמכשיר\n\n" +
                     "כל הזיהוי מתבצע במכשיר עצמו, ללא חיבור לאינטרנט."
             textSize = 16f
             setTextColor(Color.WHITE)
