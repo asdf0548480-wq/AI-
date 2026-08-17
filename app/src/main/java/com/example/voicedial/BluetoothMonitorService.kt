@@ -264,22 +264,27 @@ class BluetoothMonitorService : Service() {
 
         var foundUri: Uri? = null
         var foundTitle: String? = null
+        var bestScore = 0.0
 
         try {
             contentResolver.query(collection, projection, selection, null, null)?.use { cursor ->
                 val idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
                 val titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
                 val nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
-                val q = query.trim().lowercase()
 
                 while (cursor.moveToNext()) {
                     val title = cursor.getString(titleCol) ?: ""
                     val name = cursor.getString(nameCol) ?: ""
-                    if (title.lowercase().contains(q) || name.lowercase().contains(q)) {
+
+                    val scoreTitle = Transliteration.similarity(query, title)
+                    val scoreName = Transliteration.similarity(query, name)
+                    val score = maxOf(scoreTitle, scoreName)
+
+                    if (score > bestScore) {
+                        bestScore = score
                         val id = cursor.getLong(idCol)
                         foundUri = Uri.withAppendedPath(collection, id.toString())
                         foundTitle = title.ifBlank { name }
-                        break
                     }
                 }
             }
@@ -287,6 +292,10 @@ class BluetoothMonitorService : Service() {
             Log.e(TAG, "שגיאה בחיפוש שירים", e)
             showToast("שגיאה בחיפוש: ${e.message}")
             return
+        }
+
+        if (bestScore < 0.45) {
+            foundUri = null
         }
 
         val uri = foundUri
