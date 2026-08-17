@@ -33,6 +33,8 @@ class BluetoothMonitorService : Service() {
     private var isListening = false
     private var isSongSearchMode = false
     private var mediaPlayer: MediaPlayer? = null
+    var currentSongTitle: String? = null
+        private set
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private fun showToast(message: String) {
@@ -72,6 +74,7 @@ class BluetoothMonitorService : Service() {
 
         try {
             startForeground(NOTIFICATION_ID, buildNotification("ממתין לחיבור אוזניות..."))
+            instance = this
         } catch (e: Exception) {
             Log.e(TAG, "קריסה בהפעלת startForeground", e)
             showToast("שגיאה בהפעלת השירות: ${e.javaClass.simpleName}: ${e.message}")
@@ -316,8 +319,12 @@ class BluetoothMonitorService : Service() {
                         .build()
                 )
                 setOnPreparedListener { start() }
+                setOnCompletionListener {
+                    currentSongTitle = null
+                }
                 prepareAsync()
             }
+            currentSongTitle = foundTitle
             showToast("מנגן: $foundTitle")
             updateNotification("מנגן: $foundTitle")
         } catch (e: Exception) {
@@ -325,6 +332,27 @@ class BluetoothMonitorService : Service() {
             showToast("שגיאה בניגון: ${e.message}")
         }
     }
+
+    fun pauseLocalPlayback() {
+        mediaPlayer?.let { if (it.isPlaying) it.pause() }
+        updateNotification("מושהה: ${currentSongTitle ?: ""}")
+    }
+
+    fun resumeLocalPlayback() {
+        mediaPlayer?.let { if (!it.isPlaying) it.start() }
+        updateNotification("מנגן: ${currentSongTitle ?: ""}")
+    }
+
+    fun stopLocalPlayback() {
+        mediaPlayer?.stop()
+        mediaPlayer?.release()
+        mediaPlayer = null
+        currentSongTitle = null
+        updateNotification("ממתין לחיבור אוזניות...")
+    }
+
+    fun isLocalPlaying(): Boolean = mediaPlayer?.isPlaying == true
+    fun hasLocalTrack(): Boolean = mediaPlayer != null
 
     private fun readAudioPermission(): String =
         if (Build.VERSION.SDK_INT >= 33) android.Manifest.permission.READ_MEDIA_AUDIO
@@ -334,8 +362,10 @@ class BluetoothMonitorService : Service() {
         val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         when (action) {
-            PhraseConfig.MediaAction.PLAY -> sendMediaKeyEvent(audioManager, KeyEvent.KEYCODE_MEDIA_PLAY)
-            PhraseConfig.MediaAction.PAUSE -> sendMediaKeyEvent(audioManager, KeyEvent.KEYCODE_MEDIA_PAUSE)
+            PhraseConfig.MediaAction.PLAY ->
+                if (hasLocalTrack()) resumeLocalPlayback() else sendMediaKeyEvent(audioManager, KeyEvent.KEYCODE_MEDIA_PLAY)
+            PhraseConfig.MediaAction.PAUSE ->
+                if (hasLocalTrack()) pauseLocalPlayback() else sendMediaKeyEvent(audioManager, KeyEvent.KEYCODE_MEDIA_PAUSE)
             PhraseConfig.MediaAction.NEXT -> sendMediaKeyEvent(audioManager, KeyEvent.KEYCODE_MEDIA_NEXT)
             PhraseConfig.MediaAction.PREVIOUS -> sendMediaKeyEvent(audioManager, KeyEvent.KEYCODE_MEDIA_PREVIOUS)
             PhraseConfig.MediaAction.VOLUME_UP -> audioManager.adjustStreamVolume(
@@ -383,6 +413,7 @@ class BluetoothMonitorService : Service() {
         stopListening()
         mediaPlayer?.release()
         mediaPlayer = null
+        instance = null
         unregisterReceiver(bluetoothReceiver)
     }
 
@@ -391,5 +422,10 @@ class BluetoothMonitorService : Service() {
         private const val CHANNEL_ID = "voice_dial_channel"
         private const val NOTIFICATION_ID = 1
         const val ACTION_FORCE_LISTEN = "com.example.voicedial.FORCE_LISTEN"
+
+        // Simple direct reference to the running service, so MainActivity's on-screen
+        // player buttons can control local playback without a full bind/unbind dance.
+        var instance: BluetoothMonitorService? = null
+            private set
     }
 }
