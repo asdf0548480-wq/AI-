@@ -20,6 +20,35 @@ import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var nowPlayingText: TextView
+    private val refreshHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val refreshRunnable = object : Runnable {
+        override fun run() {
+            refreshNowPlaying()
+            refreshHandler.postDelayed(this, 1000)
+        }
+    }
+
+    private fun refreshNowPlaying() {
+        val svc = BluetoothMonitorService.instance
+        nowPlayingText.text = when {
+            svc == null -> "השירות לא פעיל"
+            svc.currentSongTitle == null -> "אין ניגון פעיל"
+            svc.isLocalPlaying() -> "מנגן: ${svc.currentSongTitle}"
+            else -> "מושהה: ${svc.currentSongTitle}"
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshHandler.post(refreshRunnable)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        refreshHandler.removeCallbacks(refreshRunnable)
+    }
+
     private val requiredPermissions = mutableListOf(
         Manifest.permission.RECORD_AUDIO
     ).apply {
@@ -70,6 +99,42 @@ class MainActivity : AppCompatActivity() {
             setOnClickListener { requestPermissionsAndTest() }
         }
 
+        nowPlayingText = TextView(this).apply {
+            text = "אין ניגון פעיל"
+            textSize = 16f
+            setTextColor(Color.WHITE)
+            setPadding(40, 30, 40, 10)
+        }
+
+        val playPauseButton = Button(this).apply {
+            text = "▶ / ⏸ הפעל/השהה"
+            setOnClickListener {
+                val svc = BluetoothMonitorService.instance
+                if (svc == null) {
+                    Toast.makeText(this@MainActivity, "השירות לא פעיל", Toast.LENGTH_SHORT).show()
+                } else if (svc.isLocalPlaying()) {
+                    svc.pauseLocalPlayback()
+                } else {
+                    svc.resumeLocalPlayback()
+                }
+                refreshNowPlaying()
+            }
+        }
+
+        val stopLocalButton = Button(this).apply {
+            text = "⏹ עצור ניגון"
+            setOnClickListener {
+                BluetoothMonitorService.instance?.stopLocalPlayback()
+                refreshNowPlaying()
+            }
+        }
+
+        val playerRow = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.HORIZONTAL
+            addView(playPauseButton)
+            addView(stopLocalButton)
+        }
+
         val backgroundImage = ImageView(this).apply {
             setImageResource(R.drawable.background_photo)
             scaleType = ImageView.ScaleType.CENTER_CROP
@@ -96,6 +161,8 @@ class MainActivity : AppCompatActivity() {
             addView(status)
             addView(startButton)
             addView(testButton)
+            addView(nowPlayingText)
+            addView(playerRow)
         }
 
         val scrollWrapper = android.widget.ScrollView(this).apply {
